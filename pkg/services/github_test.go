@@ -108,7 +108,12 @@ func TestGetTemplater_GitHub_Custom_Resource(t *testing.T) {
 }
 
 func TestSend_GitHubService_BadURL(t *testing.T) {
-	e := gitHubService{}.Send(
+	service := NewGitHubService(GitHubOptions{
+		AppID:          123456789,
+		InstallationID: 123456789,
+		PrivateKey:     "-----BEGIN RSA PRIVATE KEY-----\nMIICWgIBAAKBgFPm23ojxbC1wC8X73f3aE9JEUrNEGuuj9TXscgp8HEqCHEOSh2/\nlwiPckhcdxnvu23uHGL4jwSHJe5jj4IgOUDjl/KSplJFuZYYfegQYjsOR512s4zn\nNVFsstfCNH6w7SQKsT5jVe3WPsCCuVyCZMTgEpJF2cQ7VNDYMT6hZn0NAgMBAAEC\ngYAVL7V6STAxaCPIgI3KyGHBq5y/O7sKxgCx6WmONvDtUoThL4+NpYSY98gO97Jn\njT7SCo+Gemd66Dmu0ds6K7LpIsqdGOJwp/YxgGBSxAjhL1qFHnOjhPgzE80c0aMB\ngFUnfqrxl7OqpUisrQP8K4XOPzRC/ukhI4YPG23zRi9l4QJBAJPeuqu5P0Aiy8TV\nsyxNSEaLp5QSjhrV41ooF/7Yb41crGoDPHwT5dIKi9jLMpzERY2wtL0SomNN1Bv8\nBOJIHHkCQQCRQUWVqHHLpMhmWLk9b/8q3ZFZ7mNinTaZjekhtYP1CcuFG1b9UCJE\nuJeEUH+ijYUrRKv/y8mkzkB7l5VaZ1g1AkBmxhFcNV6+xvB1mEn16qjnTz1j7xmR\nkUN5cBBtciTmTZkP/bvWSUYcnHPidChzSP9GoaCdIQx4lKlt4dXLKG+RAkBoXNxR\nFdCE/2UY2+Bj+wb71mvrkHMJ1Gj5VNPO62re8OWwQh9zK1MjyvjaEThTI5ktqE5o\nIBRF/AaqhhPB+4SNAkBko5ygyfmdooxEeM2PSCIcL/Jjs8ogOk+kPYMRtVKzdaGU\naDbUQ7GRzo2mJEuq4pGhkAh3b00Zc5Eapy5EFQlu\n-----END RSA PRIVATE KEY-----",
+	})
+	e := service.Send(
 		Notification{
 			GitHub: &GitHubNotification{
 				repoURL: "hello",
@@ -182,7 +187,7 @@ func TestGetTemplater_GitHub_Deployment(t *testing.T) {
 	assert.Equal(t, "v0.0.1", notification.GitHub.Deployment.Reference)
 }
 
-func TestNewGitHubService_GitHubOptions(t *testing.T) {
+func TestNewGitHubClient_GitHubOptions(t *testing.T) {
 	tests := []struct {
 		name                  string
 		appID, installationID interface{}
@@ -206,7 +211,7 @@ func TestNewGitHubService_GitHubOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewGitHubService(GitHubOptions{
+			_, err := NewGitHubClient(GitHubOptions{
 				AppID:          tt.appID,
 				InstallationID: tt.installationID,
 				PrivateKey:     "-----BEGIN RSA PRIVATE KEY-----\nMIICWgIBAAKBgFPm23ojxbC1wC8X73f3aE9JEUrNEGuuj9TXscgp8HEqCHEOSh2/\nlwiPckhcdxnvu23uHGL4jwSHJe5jj4IgOUDjl/KSplJFuZYYfegQYjsOR512s4zn\nNVFsstfCNH6w7SQKsT5jVe3WPsCCuVyCZMTgEpJF2cQ7VNDYMT6hZn0NAgMBAAEC\ngYAVL7V6STAxaCPIgI3KyGHBq5y/O7sKxgCx6WmONvDtUoThL4+NpYSY98gO97Jn\njT7SCo+Gemd66Dmu0ds6K7LpIsqdGOJwp/YxgGBSxAjhL1qFHnOjhPgzE80c0aMB\ngFUnfqrxl7OqpUisrQP8K4XOPzRC/ukhI4YPG23zRi9l4QJBAJPeuqu5P0Aiy8TV\nsyxNSEaLp5QSjhrV41ooF/7Yb41crGoDPHwT5dIKi9jLMpzERY2wtL0SomNN1Bv8\nBOJIHHkCQQCRQUWVqHHLpMhmWLk9b/8q3ZFZ7mNinTaZjekhtYP1CcuFG1b9UCJE\nuJeEUH+ijYUrRKv/y8mkzkB7l5VaZ1g1AkBmxhFcNV6+xvB1mEn16qjnTz1j7xmR\nkUN5cBBtciTmTZkP/bvWSUYcnHPidChzSP9GoaCdIQx4lKlt4dXLKG+RAkBoXNxR\nFdCE/2UY2+Bj+wb71mvrkHMJ1Gj5VNPO62re8OWwQh9zK1MjyvjaEThTI5ktqE5o\nIBRF/AaqhhPB+4SNAkBko5ygyfmdooxEeM2PSCIcL/Jjs8ogOk+kPYMRtVKzdaGU\naDbUQ7GRzo2mJEuq4pGhkAh3b00Zc5Eapy5EFQlu\n-----END RSA PRIVATE KEY-----",

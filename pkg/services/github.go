@@ -369,7 +369,11 @@ func (g *GitHubNotification) GetTemplater(name string, f texttemplate.FuncMap) (
 	}, nil
 }
 
-func NewGitHubService(opts GitHubOptions) (NotificationService, error) {
+func NewGitHubService(opts GitHubOptions) NotificationService {
+	return &gitHubService{opts: opts}
+}
+
+func NewGitHubClient(opts GitHubOptions) (*github.Client, error) {
 	url := "https://api.github.com"
 	if opts.EnterpriseBaseURL != "" {
 		url = opts.EnterpriseBaseURL
@@ -402,17 +406,11 @@ func NewGitHubService(opts GitHubOptions) (NotificationService, error) {
 			return nil, err
 		}
 	}
-
-	return &gitHubService{
-		opts:   opts,
-		client: client,
-	}, nil
+	return client, err
 }
 
 type gitHubService struct {
 	opts GitHubOptions
-
-	client *github.Client
 }
 
 func trunc(message string, n int) string {
@@ -436,9 +434,14 @@ func fullNameByRepoURL(rawURL string) string {
 	return path
 }
 
-func (g gitHubService) Send(notification Notification, _ Destination) error {
+func (g *gitHubService) Send(notification Notification, _ Destination) error {
 	if notification.GitHub == nil {
 		return fmt.Errorf("config is empty")
+	}
+
+	client, err := NewGitHubClient(g.opts)
+	if err != nil {
+		return fmt.Errorf("failed to create GitHub client: %w", err)
 	}
 
 	u := strings.Split(fullNameByRepoURL(notification.GitHub.repoURL), "/")
@@ -448,7 +451,8 @@ func (g gitHubService) Send(notification Notification, _ Destination) error {
 	if notification.GitHub.Status != nil {
 		// maximum is 140 characters
 		description := trunc(notification.Message, 140)
-		_, _, err := g.client.Repositories.CreateStatus(
+
+		_, _, err := client.Repositories.CreateStatus(
 			context.Background(),
 			u[0],
 			u[1],
@@ -468,7 +472,7 @@ func (g gitHubService) Send(notification Notification, _ Destination) error {
 	if notification.GitHub.Deployment != nil {
 		// maximum is 140 characters
 		description := trunc(notification.Message, 140)
-		deployments, _, err := g.client.Repositories.ListDeployments(
+		deployments, _, err := client.Repositories.ListDeployments(
 			context.Background(),
 			u[0],
 			u[1],
@@ -491,7 +495,7 @@ func (g gitHubService) Send(notification Notification, _ Destination) error {
 		if len(deployments) != 0 {
 			deployment = deployments[0]
 		} else {
-			deployment, _, err = g.client.Repositories.CreateDeployment(
+			deployment, _, err = client.Repositories.CreateDeployment(
 				context.Background(),
 				u[0],
 				u[1],
@@ -507,7 +511,7 @@ func (g gitHubService) Send(notification Notification, _ Destination) error {
 				return err
 			}
 		}
-		_, _, err = g.client.Repositories.CreateDeploymentStatus(
+		_, _, err = client.Repositories.CreateDeploymentStatus(
 			context.Background(),
 			u[0],
 			u[1],
@@ -532,7 +536,7 @@ func (g gitHubService) Send(notification Notification, _ Destination) error {
 			Body: &body,
 		}
 
-		prs, _, err := g.client.PullRequests.ListPullRequestsWithCommit(
+		prs, _, err := client.PullRequests.ListPullRequestsWithCommit(
 			context.Background(),
 			u[0],
 			u[1],
@@ -544,7 +548,7 @@ func (g gitHubService) Send(notification Notification, _ Destination) error {
 		}
 
 		for _, pr := range prs {
-			_, _, err = g.client.Issues.CreateComment(
+			_, _, err = client.Issues.CreateComment(
 				context.Background(),
 				u[0],
 				u[1],
@@ -576,7 +580,8 @@ func (g gitHubService) Send(notification Notification, _ Destination) error {
 			}
 		}
 
-		_, _, err = g.client.Checks.CreateCheckRun(
+		client, err := NewGitHubClient(g.opts)
+		_, _, err = client.Checks.CreateCheckRun(
 			context.Background(),
 			u[0],
 			u[1],

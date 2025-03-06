@@ -174,7 +174,7 @@ func NewService(serviceType string, optsData []byte) (NotificationService, error
 		if err := yaml.Unmarshal(optsData, &opts); err != nil {
 			return nil, err
 		}
-		return NewGitHubService(opts)
+		return NewGitHubService(opts), nil
 	case "teams":
 		var opts TeamsOptions
 		if err := yaml.Unmarshal(optsData, &opts); err != nil {
